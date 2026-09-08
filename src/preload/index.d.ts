@@ -1,10 +1,11 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
+import type { ProjectScan } from '../shared/projects'
 
 declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      chooseProjectsFolder: () => Promise<string | null>
+      chooseAndScanProjects: () => Promise<ProjectScan | null>
     }
   }
 }

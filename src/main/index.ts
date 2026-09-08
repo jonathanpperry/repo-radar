@@ -3,6 +3,9 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+import { scanProjects } from './projects'
+import type { ProjectScan } from '../shared/projects'
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -49,20 +52,24 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('projects:choose-folder', async (event): Promise<string | null> => {
+  ipcMain.handle('projects:choose-and-scan', async (event): Promise<ProjectScan | null> => {
     const window = BrowserWindow.fromWebContents(event.sender)
 
     if (!window || event.senderFrame !== window.webContents.mainFrame) {
-      throw new Error('Invalid folder-picker request')
+      throw new Error('Invalid project scan request')
     }
 
     const result = await dialog.showOpenDialog(window, {
       title: 'Choose your projects folder',
-      buttonLabel: 'Select folder',
+      buttonLabel: 'Scan folder',
       properties: ['openDirectory']
     })
 
-    return result.canceled ? null : (result.filePaths[0] ?? null)
+    const folder = result.filePaths[0]
+
+    if (result.canceled || !folder) return null
+
+    return scanProjects(folder)
   })
 
   createWindow()
