@@ -52,6 +52,19 @@ function App(): React.JSX.Element {
                 {scan.repositories.map((repository) => (
                   <li key={repository.path} className="repository-card">
                     <h3>{repository.name}</h3>
+                    {repository.git.available ? (
+                      <div className="repository-meta">
+                        <span className="badge">{repository.git.branch}</span>
+
+                        <span
+                          className={`badge ${repository.git.isDirty ? 'badge-dirty' : 'badge-clean'}`}
+                        >
+                          {repository.git.isDirty ? 'Uncommitted changes' : 'Clean'}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="status-error">{repository.git.message}</p>
+                    )}
                     <p className="project-path">{repository.path}</p>
                   </li>
                 ))}

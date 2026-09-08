@@ -1,6 +1,7 @@
 import { readdir, stat } from 'node:fs/promises'
 import { basename, join } from 'node:path'
 import type { ProjectScan } from '../shared/projects'
+import { getGitStatus } from './git'
 
 export async function scanProjects(folder: string): Promise<ProjectScan> {
   const result: ProjectScan = {
@@ -16,7 +17,8 @@ export async function scanProjects(folder: string): Promise<ProjectScan> {
       if (marker.isDirectory() || marker.isFile()) {
         result.repositories.push({
           name: basename(directory) || directory,
-          path: directory
+          path: directory,
+          git: await getGitStatus(directory)
         })
       }
     } catch (error) {
