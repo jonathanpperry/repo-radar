@@ -1,8 +1,12 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
-const api = {}
+import type { ProjectScan } from '../shared/projects'
+
+const api = {
+  chooseAndScanProjects: (): Promise<ProjectScan | null> =>
+    ipcRenderer.invoke('projects:choose-and-scan')
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
