@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -49,8 +49,21 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('projects:choose-folder', async (event): Promise<string | null> => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+
+    if (!window || event.senderFrame !== window.webContents.mainFrame) {
+      throw new Error('Invalid folder-picker request')
+    }
+
+    const result = await dialog.showOpenDialog(window, {
+      title: 'Choose your projects folder',
+      buttonLabel: 'Select folder',
+      properties: ['openDirectory']
+    })
+
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
 
   createWindow()
 

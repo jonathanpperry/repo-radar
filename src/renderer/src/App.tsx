@@ -1,34 +1,55 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { useState } from 'react'
 
 function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  const [folder, setFolder] = useState<string | null>(null)
+  const [isChoosing, setIsChoosing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function chooseFolder(): Promise<void> {
+    setIsChoosing(true)
+    setError(null)
+
+    try {
+      const selectedFolder = await window.api.chooseProjectsFolder()
+
+      if (selectedFolder !== null) {
+        setFolder(selectedFolder)
+      }
+    } catch (err) {
+      console.error('Folder selection failed:', err)
+      setError('Could not open the folder picker. Please try again.')
+    } finally {
+      setIsChoosing(false)
+    }
+  }
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
+    <main style={{ maxWidth: 640, padding: 32 }}>
+      <h1>Repo Radar</h1>
+      <p>Your local projects, in one place.</p>
+
+      <button
+        type="button"
+        onClick={() => void chooseFolder()}
+        disabled={isChoosing}
+        style={{ marginTop: 24, padding: '12px 20px', cursor: 'pointer' }}
+      >
+        {isChoosing ? 'Choosing folder…' : 'Choose projects folder'}
+      </button>
+
+      <div aria-live="polite" style={{ marginTop: 24 }}>
+        {folder ? (
+          <>
+            <h2>Selected folder</h2>
+            <p style={{ overflowWrap: 'anywhere', userSelect: 'text' }}>{folder}</p>
+          </>
+        ) : (
+          <p>Select the folder where you keep your Git repositories.</p>
+        )}
       </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+
+      {error && <p role="alert">{error}</p>}
+    </main>
   )
 }
 
