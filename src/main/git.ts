@@ -15,22 +15,34 @@ async function runGit(directory: string, args: string[]): Promise<string> {
   return stdout.trim()
 }
 
+async function getLastCommitDate(directory: string): Promise<string | null> {
+  try {
+    const date = await runGit(directory, ['log', '-1', '--format=%cI'])
+    return date || null
+  } catch (error) {
+    console.error('Could not read last commit:', directory, error)
+    return null
+  }
+}
+
 export async function getGitStatus(directory: string): Promise<GitStatus> {
   try {
-    const [branch, changes] = await Promise.all([
+    const [branch, changes, lastCommitDate] = await Promise.all([
       runGit(directory, ['branch', '--show-current']),
       runGit(directory, [
         'status',
         '--porcelain=v1',
         '--untracked-files=normal',
         '--ignore-submodules=none'
-      ])
+      ]),
+      getLastCommitDate(directory)
     ])
 
     return {
       available: true,
       branch: branch || 'Detached HEAD',
-      isDirty: changes.length > 0
+      isDirty: changes.length > 0,
+      lastCommitDate
     }
   } catch (error) {
     console.error('Could not read Git status:', directory, error)

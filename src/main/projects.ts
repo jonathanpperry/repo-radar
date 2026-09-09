@@ -20,29 +20,52 @@ export async function scanProjects(folder: string): Promise<ProjectScan> {
           path: directory,
           git: await getGitStatus(directory)
         })
+
+        // Don't recurse inside an already-discovered repo.
+        return
       }
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code
 
-      // No .git marker simply means this isn't a repository.
-      if (code === 'ENOENT' || code === 'ENOTDIR') return
+      if (code !== 'ENOENT' && code !== 'ENOTDIR') {
+        console.error('Could not inspect project:', directory, error)
+        result.warnings.push(`Could not inspect ${directory}`)
+        return
+      }
+    }
 
-      console.error('Could not inspect project:', directory, error)
-      result.warnings.push(`Could not inspect ${directory}`)
+    // No .git marker here, so search subdirectories.
+    let entries
+
+    try {
+      entries = await readdir(directory, { withFileTypes: true })
+    } catch (error) {
+      console.error('Could not read directory:', directory, error)
+      result.warnings.push(`Could not read ${directory}`)
+      return
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue
+
+      if (
+        entry.name === '.git' ||
+        entry.name === 'node_modules' ||
+        entry.name === 'dist' ||
+        entry.name === 'build' ||
+        entry.name === 'out'
+      ) {
+        continue
+      }
+
+      await inspect(join(directory, entry.name))
     }
   }
 
-  // Let a failure to read the selected folder reach the UI.
-  const entries = await readdir(folder, { withFileTypes: true })
+  // Let a failure to read the selected root reach the UI.
+  await readdir(folder)
 
   await inspect(folder)
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue
-    if (entry.name === '.git' || entry.name === 'node_modules') continue
-
-    await inspect(join(folder, entry.name))
-  }
 
   result.repositories.sort((a, b) => a.name.localeCompare(b.name))
 

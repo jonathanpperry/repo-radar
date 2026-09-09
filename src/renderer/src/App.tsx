@@ -53,18 +53,31 @@ function App(): React.JSX.Element {
                   <li key={repository.path} className="repository-card">
                     <h3>{repository.name}</h3>
                     {repository.git.available ? (
-                      <div className="repository-meta">
-                        <span className="badge">{repository.git.branch}</span>
+                      <>
+                        <div className="repository-meta">
+                          <span className="badge">{repository.git.branch}</span>
 
-                        <span
-                          className={`badge ${repository.git.isDirty ? 'badge-dirty' : 'badge-clean'}`}
-                        >
-                          {repository.git.isDirty ? 'Uncommitted changes' : 'Clean'}
-                        </span>
-                      </div>
+                          <span
+                            className={`badge ${
+                              repository.git.isDirty ? 'badge-dirty' : 'badge-clean'
+                            }`}
+                          >
+                            {repository.git.isDirty ? 'Uncommitted changes' : 'Clean'}
+                          </span>
+                        </div>
+
+                        <p>
+                          Last commit:{' '}
+                          {repository.git.lastCommitDate
+                            ? new Intl.DateTimeFormat(undefined, {
+                                dateStyle: 'medium'
+                              }).format(new Date(repository.git.lastCommitDate))
+                            : 'No commits yet'}
+                        </p>
+                      </>
                     ) : (
                       <p className="status-error">{repository.git.message}</p>
-                    )}
+                    )}{' '}
                     <p className="project-path">{repository.path}</p>
                   </li>
                 ))}
