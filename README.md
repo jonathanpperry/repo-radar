@@ -32,3 +32,20 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+## Development Workflow
+
+Repo Radar uses Electron with separate main-process and renderer code.
+
+* Changes under `src/renderer/` usually appear through hot reload while `npm run dev` is running.
+* Changes to Electron/main-process code under `src/main/`, such as repository scanning or Git integration, may require restarting the development server before the new behavior is reflected.
+* Changes to shared types under `src/shared/` can affect both processes.
+
+If a backend or Git-related change does not appear after saving, stop the development server and restart it:
+
+```bash
+Ctrl+C
+npm run dev
+```
+
+When debugging a feature, verify whether the code runs in the renderer or Electron main process before assuming hot reload has picked up the change.
