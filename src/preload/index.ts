@@ -3,9 +3,11 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 import type { ProjectScan } from '../shared/projects'
 
-const api = {
+export const api = {
   chooseAndScanProjects: (): Promise<ProjectScan | null> =>
-    ipcRenderer.invoke('projects:choose-and-scan')
+    ipcRenderer.invoke('projects:choose-and-scan'),
+  openInVSCode: (repositoryPath: string): Promise<void> =>
+    ipcRenderer.invoke('projects:open-in-vscode', repositoryPath)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
@@ -19,8 +21,6 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
   window.electron = electronAPI
-  // @ts-ignore (define in dts)
   window.api = api
 }

@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { scanProjects } from './projects'
 import type { ProjectScan } from '../shared/projects'
+import { exec } from 'child_process'
 
 function createWindow(): void {
   // Create the browser window.
@@ -70,6 +71,23 @@ app.whenReady().then(() => {
     if (result.canceled || !folder) return null
 
     return scanProjects(folder)
+  })
+
+  ipcMain.handle('projects:open-in-vscode', async (_event, repoPath: string) => {
+    return new Promise((resolve, reject) => {
+      // Sanitize or wrap the path in quotes to handle space characters safely
+      exec(`code "${repoPath}"`, (error) => {
+        if (error) {
+          reject(
+            new Error(
+              'Unable to launch VS Code. Check if the "code" command is installed in your PATH.'
+            )
+          )
+        } else {
+          resolve({ success: true })
+        }
+      })
+    })
   })
 
   createWindow()
