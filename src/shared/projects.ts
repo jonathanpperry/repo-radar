@@ -2,7 +2,7 @@ export type GitStatus =
   | {
       available: true
       branch: string
-      isDirty: boolean,
+      isDirty: boolean
       lastCommitDate: string | null
     }
   | {
