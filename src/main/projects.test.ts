@@ -30,7 +30,7 @@ afterEach(async () => {
 })
 
 describe('scanProjects', () => {
-  ;(it('discovers repositories recursively and sorts them by name', async () => {
+  it('discovers repositories recursively and sorts them by name', async () => {
     const root = await mkdtemp(join(tmpdir(), 'repo-radar-'))
     tempDirectories.push(root)
 
@@ -45,25 +45,26 @@ describe('scanProjects', () => {
     expect(result.repositories.map((repository) => repository.name)).toEqual(['alpha', 'beta'])
 
     expect(result.warnings).toEqual([])
-  }),
-    it('ignores common generated and dependency directories', async () => {
-      const root = await mkdtemp(join(tmpdir(), 'repo-radar-'))
-      tempDirectories.push(root)
+  })
 
-      const visibleRepo = join(root, 'visible-repo')
+  it('ignores common generated and dependency directories', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'repo-radar-'))
+    tempDirectories.push(root)
 
-      await mkdir(join(visibleRepo, '.git'), { recursive: true })
+    const visibleRepo = join(root, 'visible-repo')
 
-      for (const ignoredDirectory of ['node_modules', 'dist', 'build', 'out']) {
-        await mkdir(join(root, ignoredDirectory, 'hidden-repo', '.git'), {
-          recursive: true
-        })
-      }
+    await mkdir(join(visibleRepo, '.git'), { recursive: true })
 
-      const result = await scanProjects(root)
+    for (const ignoredDirectory of ['node_modules', 'dist', 'build', 'out']) {
+      await mkdir(join(root, ignoredDirectory, 'hidden-repo', '.git'), {
+        recursive: true
+      })
+    }
 
-      expect(result.repositories.map((repository) => repository.name)).toEqual(['visible-repo'])
+    const result = await scanProjects(root)
 
-      expect(result.warnings).toEqual([])
-    }))
+    expect(result.repositories.map((repository) => repository.name)).toEqual(['visible-repo'])
+
+    expect(result.warnings).toEqual([])
+  })
 })
