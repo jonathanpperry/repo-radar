@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ProjectScan } from '../../shared/projects'
+import { format } from 'timeago.js'
 
 function App(): React.JSX.Element {
   const [scan, setScan] = useState<ProjectScan | null>(null)
@@ -19,6 +20,8 @@ function App(): React.JSX.Element {
 
       // Canceling preserves the previous results.
       if (result !== null) {
+
+        // Sort here
         setScan(result)
       }
     } catch (err) {
@@ -91,9 +94,7 @@ function App(): React.JSX.Element {
                           <p>
                             Last commit:{' '}
                             {repository.git.lastCommitDate
-                              ? new Intl.DateTimeFormat(undefined, {
-                                  dateStyle: 'medium'
-                                }).format(new Date(repository.git.lastCommitDate))
+                              ? format(repository.git.lastCommitDate)
                               : 'No commits yet'}
                           </p>
                         </>

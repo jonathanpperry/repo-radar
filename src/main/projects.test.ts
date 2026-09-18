@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { getGitStatus } from './git'
 
 vi.mock('./git', () => ({
   getGitStatus: vi.fn(async () => ({
@@ -30,7 +31,7 @@ afterEach(async () => {
 })
 
 describe('scanProjects', () => {
-  it('discovers repositories recursively and sorts them by name', async () => {
+  it('discovers repositories recursively and falls back to sorting by name', async () => {
     const root = await mkdtemp(join(tmpdir(), 'repo-radar-'))
     tempDirectories.push(root)
 
@@ -66,5 +67,30 @@ describe('scanProjects', () => {
     expect(result.repositories.map((repository) => repository.name)).toEqual(['visible-repo'])
 
     expect(result.warnings).toEqual([])
+  })
+
+  it('sorts repositories by most recent commit date', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'repo-radar-'))
+    tempDirectories.push(root)
+
+    const olderRepo = join(root, 'older-repo')
+    const newerRepo = join(root, 'newer-repo')
+
+    await mkdir(join(olderRepo, '.git'), { recursive: true })
+    await mkdir(join(newerRepo, '.git'), { recursive: true })
+
+    vi.mocked(getGitStatus).mockImplementation(async (directory) => ({
+      available: true,
+      branch: 'main',
+      isDirty: false,
+      lastCommitDate: directory === newerRepo ? '2026-09-18T12:00:00Z' : '2026-09-17T12:00:00Z'
+    }))
+
+    const result = await scanProjects(root)
+
+    expect(result.repositories.map((repository) => repository.name)).toEqual([
+      'newer-repo',
+      'older-repo'
+    ])
   })
 })

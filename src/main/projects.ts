@@ -67,7 +67,16 @@ export async function scanProjects(folder: string): Promise<ProjectScan> {
 
   await inspect(folder)
 
-  result.repositories.sort((a, b) => a.name.localeCompare(b.name))
+  result.repositories.sort((a, b) => {
+    const aDate = a.git.available ? a.git.lastCommitDate : null
+    const bDate = b.git.available ? b.git.lastCommitDate : null
+
+    if (!aDate && !bDate) return a.name.localeCompare(b.name)
+    if (!aDate) return 1
+    if (!bDate) return -1
+
+    return new Date(bDate).getTime() - new Date(aDate).getTime()
+  })
 
   return result
 }
