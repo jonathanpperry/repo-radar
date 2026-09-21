@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: repo-radar
+appId: me.jonathanperry.reporadar
+productName: Repo Radar
 directories:
   buildResources: build
 files:
@@ -13,11 +13,18 @@ asarUnpack:
   - resources/**
 win:
   executableName: repo-radar
+  target: nsis
+  icon: build/icon.ico
+
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
+  oneClick: true
+  perMachine: false
   createDesktopShortcut: always
+  createStartMenuShortcut: true
+
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
