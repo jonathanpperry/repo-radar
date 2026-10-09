@@ -1,51 +1,50 @@
-import { useState } from 'react'
-import type { ProjectScan } from '../../shared/projects'
-import { format } from 'timeago.js'
+import { useState } from "react";
+import type { ProjectScan } from "../../shared/projects";
+import { format } from "timeago.js";
 
 function App(): React.JSX.Element {
-  const [scan, setScan] = useState<ProjectScan | null>(null)
-  const [isBusy, setIsBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [scan, setScan] = useState<ProjectScan | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Open in Vscode state
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [openingPaths, setOpeningPaths] = useState<Set<string>>(() => new Set())
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [openingPaths, setOpeningPaths] = useState<Set<string>>(() => new Set());
 
   async function chooseAndScan(): Promise<void> {
-    setIsBusy(true)
-    setError(null)
+    setIsBusy(true);
+    setError(null);
 
     try {
-      const result = await window.api.chooseAndScanProjects()
+      const result = await window.api.chooseAndScanProjects();
 
       // Canceling preserves the previous results.
       if (result !== null) {
-
         // Sort here
-        setScan(result)
+        setScan(result);
       }
     } catch (err) {
-      console.error('Project scan failed:', err)
-      setError('Could not scan that folder. Check that it exists and is readable.')
+      console.error("Project scan failed:", err);
+      setError("Could not scan that folder. Check that it exists and is readable.");
     } finally {
-      setIsBusy(false)
+      setIsBusy(false);
     }
   }
 
   async function handleOpenInVSCode(repositoryPath: string): Promise<void> {
-    setOpeningPaths((previous) => new Set(previous).add(repositoryPath))
-    setErrorMessage(null)
+    setOpeningPaths((previous) => new Set(previous).add(repositoryPath));
+    setErrorMessage(null);
 
     try {
-      await window.api.openInVSCode(repositoryPath)
+      await window.api.openInVSCode(repositoryPath);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to open VS Code')
+      setErrorMessage(error instanceof Error ? error.message : "Failed to open VS Code");
     } finally {
       setOpeningPaths((previous) => {
-        const next = new Set(previous)
-        next.delete(repositoryPath)
-        return next
-      })
+        const next = new Set(previous);
+        next.delete(repositoryPath);
+        return next;
+      });
     }
   }
 
@@ -55,7 +54,7 @@ function App(): React.JSX.Element {
       <p>Your local projects, in one place.</p>
 
       <button type="button" onClick={() => void chooseAndScan()} disabled={isBusy}>
-        {isBusy ? 'Choosing or scanning…' : 'Choose projects folder'}
+        {isBusy ? "Choosing or scanning…" : "Choose projects folder"}
       </button>
 
       {error && <p role="alert">{error}</p>}
@@ -64,8 +63,8 @@ function App(): React.JSX.Element {
         {scan ? (
           <>
             <h2>
-              {scan.repositories.length}{' '}
-              {scan.repositories.length === 1 ? 'repository' : 'repositories'} found
+              {scan.repositories.length}{" "}
+              {scan.repositories.length === 1 ? "repository" : "repositories"} found
             </h2>
             <p className="project-path">{scan.folder}</p>
 
@@ -84,18 +83,18 @@ function App(): React.JSX.Element {
 
                             <span
                               className={`badge ${
-                                repository.git.isDirty ? 'badge-dirty' : 'badge-clean'
+                                repository.git.isDirty ? "badge-dirty" : "badge-clean"
                               }`}
                             >
-                              {repository.git.isDirty ? 'Uncommitted changes' : 'Clean'}
+                              {repository.git.isDirty ? "Uncommitted changes" : "Clean"}
                             </span>
                           </div>
 
                           <p>
-                            Last commit:{' '}
+                            Last commit:{" "}
                             {repository.git.lastCommitDate
                               ? format(repository.git.lastCommitDate)
-                              : 'No commits yet'}
+                              : "No commits yet"}
                           </p>
                         </>
                       ) : (
@@ -109,8 +108,8 @@ function App(): React.JSX.Element {
                         disabled={openingPaths.has(repository.path)}
                       >
                         {openingPaths.has(repository.path)
-                          ? 'Opening in VS Code…'
-                          : 'Open in VS Code'}
+                          ? "Opening in VS Code…"
+                          : "Open in VS Code"}
                       </button>
                     </li>
                   ))}
@@ -135,7 +134,7 @@ function App(): React.JSX.Element {
         )}
       </section>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

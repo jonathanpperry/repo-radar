@@ -1,82 +1,82 @@
-import { readdir, stat } from 'node:fs/promises'
-import { basename, join } from 'node:path'
-import type { ProjectScan } from '../shared/projects'
-import { getGitStatus } from './git'
+import { readdir, stat } from "node:fs/promises";
+import { basename, join } from "node:path";
+import type { ProjectScan } from "../shared/projects";
+import { getGitStatus } from "./git";
 
 export async function scanProjects(folder: string): Promise<ProjectScan> {
   const result: ProjectScan = {
     folder,
     repositories: [],
     warnings: []
-  }
+  };
 
   async function inspect(directory: string): Promise<void> {
     try {
-      const marker = await stat(join(directory, '.git'))
+      const marker = await stat(join(directory, ".git"));
 
       if (marker.isDirectory() || marker.isFile()) {
         result.repositories.push({
           name: basename(directory) || directory,
           path: directory,
           git: await getGitStatus(directory)
-        })
+        });
 
         // Don't recurse inside an already-discovered repo.
-        return
+        return;
       }
     } catch (error) {
-      const code = (error as NodeJS.ErrnoException).code
+      const code = (error as NodeJS.ErrnoException).code;
 
-      if (code !== 'ENOENT' && code !== 'ENOTDIR') {
-        console.error('Could not inspect project:', directory, error)
-        result.warnings.push(`Could not inspect ${directory}`)
-        return
+      if (code !== "ENOENT" && code !== "ENOTDIR") {
+        console.error("Could not inspect project:", directory, error);
+        result.warnings.push(`Could not inspect ${directory}`);
+        return;
       }
     }
 
     // No .git marker here, so search subdirectories.
-    let entries
+    let entries;
 
     try {
-      entries = await readdir(directory, { withFileTypes: true })
+      entries = await readdir(directory, { withFileTypes: true });
     } catch (error) {
-      console.error('Could not read directory:', directory, error)
-      result.warnings.push(`Could not read ${directory}`)
-      return
+      console.error("Could not read directory:", directory, error);
+      result.warnings.push(`Could not read ${directory}`);
+      return;
     }
 
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue
+      if (!entry.isDirectory()) continue;
 
       if (
-        entry.name === '.git' ||
-        entry.name === 'node_modules' ||
-        entry.name === 'dist' ||
-        entry.name === 'build' ||
-        entry.name === 'out'
+        entry.name === ".git" ||
+        entry.name === "node_modules" ||
+        entry.name === "dist" ||
+        entry.name === "build" ||
+        entry.name === "out"
       ) {
-        continue
+        continue;
       }
 
-      await inspect(join(directory, entry.name))
+      await inspect(join(directory, entry.name));
     }
   }
 
   // Let a failure to read the selected root reach the UI.
-  await readdir(folder)
+  await readdir(folder);
 
-  await inspect(folder)
+  await inspect(folder);
 
   result.repositories.sort((a, b) => {
-    const aDate = a.git.available ? a.git.lastCommitDate : null
-    const bDate = b.git.available ? b.git.lastCommitDate : null
+    const aDate = a.git.available ? a.git.lastCommitDate : null;
+    const bDate = b.git.available ? b.git.lastCommitDate : null;
 
-    if (!aDate && !bDate) return a.name.localeCompare(b.name)
-    if (!aDate) return 1
-    if (!bDate) return -1
+    if (!aDate && !bDate) return a.name.localeCompare(b.name);
+    if (!aDate) return 1;
+    if (!bDate) return -1;
 
-    return new Date(bDate).getTime() - new Date(aDate).getTime()
-  })
+    return new Date(bDate).getTime() - new Date(aDate).getTime();
+  });
 
-  return result
+  return result;
 }

@@ -1,11 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { app, shell, BrowserWindow, ipcMain, dialog } from "electron";
+import { join } from "path";
+import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import icon from "../../resources/icon.png?asset";
 
-import { scanProjects } from './projects'
-import type { ProjectScan } from '../shared/projects'
-import { exec, execFile } from 'child_process'
+import { scanProjects } from "./projects";
+import type { ProjectScan } from "../shared/projects";
+import { exec, execFile } from "child_process";
 
 function createWindow(): void {
   // Create the browser window.
@@ -14,28 +14,28 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, "../preload/index.js"),
       sandbox: false
     }
-  })
+  });
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  mainWindow.on("ready-to-show", () => {
+    mainWindow.show();
+  });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: "deny" };
+  });
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
 }
 
@@ -44,49 +44,49 @@ function createWindow(): void {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('me.jonathanperry.reporadar')
+  electronApp.setAppUserModelId("me.jonathanperry.reporadar");
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window);
+  });
 
-  ipcMain.handle('projects:choose-and-scan', async (event): Promise<ProjectScan | null> => {
-    const window = BrowserWindow.fromWebContents(event.sender)
+  ipcMain.handle("projects:choose-and-scan", async (event): Promise<ProjectScan | null> => {
+    const window = BrowserWindow.fromWebContents(event.sender);
 
     if (!window || event.senderFrame !== window.webContents.mainFrame) {
-      throw new Error('Invalid project scan request')
+      throw new Error("Invalid project scan request");
     }
 
     const result = await dialog.showOpenDialog(window, {
-      title: 'Choose your projects folder',
-      buttonLabel: 'Scan folder',
-      properties: ['openDirectory']
-    })
+      title: "Choose your projects folder",
+      buttonLabel: "Scan folder",
+      properties: ["openDirectory"]
+    });
 
-    const folder = result.filePaths[0]
+    const folder = result.filePaths[0];
 
-    if (result.canceled || !folder) return null
+    if (result.canceled || !folder) return null;
 
-    return scanProjects(folder)
-  })
+    return scanProjects(folder);
+  });
 
-  ipcMain.handle('projects:open-in-vscode', async (_event, repoPath: string) => {
+  ipcMain.handle("projects:open-in-vscode", async (_event, repoPath: string) => {
     // Packaged macOS apps may not inherit the terminal's PATH.
     // Use macOS `open` to launch VS Code without relying on the `code` CLI.
-    if (process.platform === 'darwin') {
+    if (process.platform === "darwin") {
       return new Promise((resolve, reject) => {
-        execFile('/usr/bin/open', ['-a', 'Visual Studio Code', repoPath], (error) => {
+        execFile("/usr/bin/open", ["-a", "Visual Studio Code", repoPath], (error) => {
           if (error) {
-            reject(new Error(`Unable to launch VS Code: ${error.message}`))
-            return
+            reject(new Error(`Unable to launch VS Code: ${error.message}`));
+            return;
           }
 
-          resolve({ success: true })
-        })
-      })
+          resolve({ success: true });
+        });
+      });
     }
 
     return new Promise((resolve, reject) => {
@@ -97,31 +97,31 @@ app.whenReady().then(() => {
             new Error(
               'Unable to launch VS Code. Check if the "code" command is installed in your PATH.'
             )
-          )
+          );
         } else {
-          resolve({ success: true })
+          resolve({ success: true });
         }
-      })
-    })
-  })
+      });
+    });
+  });
 
-  createWindow()
+  createWindow();
 
-  app.on('activate', function () {
+  app.on("activate", function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
-})
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
-})
+});
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
