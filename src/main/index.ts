@@ -5,7 +5,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { scanProjects } from './projects'
 import type { ProjectScan } from '../shared/projects'
-import { exec } from 'child_process'
+import { exec, execFile } from 'child_process'
 
 function createWindow(): void {
   // Create the browser window.
@@ -74,6 +74,21 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('projects:open-in-vscode', async (_event, repoPath: string) => {
+    // Packaged macOS apps may not inherit the terminal's PATH.
+    // Use macOS `open` to launch VS Code without relying on the `code` CLI.
+    if (process.platform === 'darwin') {
+      return new Promise((resolve, reject) => {
+        execFile('/usr/bin/open', ['-a', 'Visual Studio Code', repoPath], (error) => {
+          if (error) {
+            reject(new Error(`Unable to launch VS Code: ${error.message}`))
+            return
+          }
+
+          resolve({ success: true })
+        })
+      })
+    }
+
     return new Promise((resolve, reject) => {
       // Sanitize or wrap the path in quotes to handle space characters safely
       exec(`code "${repoPath}"`, (error) => {
