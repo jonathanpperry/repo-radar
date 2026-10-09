@@ -26,6 +26,7 @@ nsis:
   createStartMenuShortcut: true
 
 mac:
+  icon: build/repo-radar.png
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
