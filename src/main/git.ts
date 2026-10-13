@@ -27,23 +27,19 @@ async function getLastCommitDate(directory: string): Promise<string | null> {
 
 export async function getGitStatus(directory: string): Promise<GitStatus> {
   try {
-    const [branch, changes, lastCommitDate] = await Promise.all([
-      runGit(directory, ["branch", "--show-current"]),
+    const [status, lastCommitDate] = await Promise.all([
       runGit(directory, [
         "status",
-        "--porcelain=v1",
-        "--untracked-files=normal",
+        "--porcelain=v2",
+        "--branch",
+        "-z",
+        "--untracked-files=all",
         "--ignore-submodules=none"
       ]),
       getLastCommitDate(directory)
     ]);
 
-    return {
-      available: true,
-      branch: branch || "Detached HEAD",
-      isDirty: changes.length > 0,
-      lastCommitDate
-    };
+    return { available: true, ...parseGitStatus(status), lastCommitDate };
   } catch (error) {
     console.error("Could not read Git status:", directory, error);
 
@@ -57,4 +53,43 @@ export async function getGitStatus(directory: string): Promise<GitStatus> {
           : "Could not read Git status. Check the terminal for details."
     };
   }
+}
+
+// NUL delimiters keep filenames containing newlines from corrupting the count.
+export function parseGitStatus(status: string): {
+  branch: string;
+  isDirty: boolean;
+  changedFiles: number;
+  upstream: string | null;
+  ahead: number | null;
+  behind: number | null;
+} {
+  const records = status.split("\0");
+  let branch = "Detached HEAD";
+  let upstream: string | null = null;
+  let ahead: number | null = null;
+  let behind: number | null = null;
+  let changedFiles = 0;
+
+  for (let index = 0; index < records.length; index++) {
+    const record = records[index];
+    if (record.startsWith("# branch.head ")) {
+      const head = record.slice("# branch.head ".length);
+      branch = head === "(detached)" ? "Detached HEAD" : head;
+    } else if (record.startsWith("# branch.upstream ")) {
+      upstream = record.slice("# branch.upstream ".length);
+    } else if (record.startsWith("# branch.ab ")) {
+      const match = /^# branch.ab \+(\d+) -(\d+)$/.exec(record);
+      if (match) {
+        ahead = Number(match[1]);
+        behind = Number(match[2]);
+      }
+    } else if (/^[12u?] /.test(record)) {
+      changedFiles++;
+      // Rename records include a second NUL-delimited original pathname.
+      if (record.startsWith("2 ")) index++;
+    }
+  }
+
+  return { branch, isDirty: changedFiles > 0, changedFiles, upstream, ahead, behind };
 }

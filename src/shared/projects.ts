@@ -3,6 +3,10 @@ export type GitStatus =
       available: true;
       branch: string;
       isDirty: boolean;
+      changedFiles: number;
+      upstream: string | null;
+      ahead: number | null;
+      behind: number | null;
       lastCommitDate: string | null;
     }
   | {

@@ -9,6 +9,10 @@ vi.mock("./git", () => ({
     available: true,
     branch: "main",
     isDirty: false,
+    changedFiles: 0,
+    upstream: null,
+    ahead: null,
+    behind: null,
     lastCommitDate: null
   }))
 }));
@@ -83,6 +87,10 @@ describe("scanProjects", () => {
       available: true,
       branch: "main",
       isDirty: false,
+      changedFiles: 0,
+      upstream: null,
+      ahead: null,
+      behind: null,
       lastCommitDate: directory === newerRepo ? "2026-09-18T12:00:00Z" : "2026-09-17T12:00:00Z"
     }));
 

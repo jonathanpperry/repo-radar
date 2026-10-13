@@ -86,9 +86,25 @@ function App(): React.JSX.Element {
                                 repository.git.isDirty ? "badge-dirty" : "badge-clean"
                               }`}
                             >
-                              {repository.git.isDirty ? "Uncommitted changes" : "Clean"}
+                              {repository.git.isDirty
+                                ? `${repository.git.changedFiles} changed ${repository.git.changedFiles === 1 ? "file" : "files"}`
+                                : "Clean"}
+                            </span>
+                            <span
+                              className="badge"
+                              title="Compared with the locally stored upstream. Fetch in your Git client to update."
+                            >
+                              {!repository.git.upstream
+                                ? "No upstream configured"
+                                : repository.git.ahead === null || repository.git.behind === null
+                                  ? "Upstream comparison unavailable"
+                                  : `${repository.git.ahead} ahead · ${repository.git.behind} behind`}
                             </span>
                           </div>
+                          <p className="project-path">
+                            {repository.git.upstream && `Tracking ${repository.git.upstream}. `}
+                            Status at scan time; upstream counts reflect the last fetch.
+                          </p>
 
                           <p>
                             Last commit:{" "}
